@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;1,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #101830;
+    --panel: #1a2340;
+    --panel-2: #151d38;
+    --line: #2b3560;
+    --text: #ece8dd;
+    --text-dim: #9aa3c4;
+    --accent: #e8a33d;
+    --accent-2: #59bfa3;
+    --danger: #d9765a;
+    --radius: 6px;
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    padding: 64px 20px;
+  }
+
+  .page-title{
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 500;
+    font-size: 1.7rem;
+    text-align: center;
+    margin: 0 0 40px;
+  }
+
+  .layout{
+    max-width: 760px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  .card{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .chrome{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .chrome .dots{ display: flex; gap: 6px; }
+
+  .chrome .dots span{
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--line);
+  }
+
+  .chrome .dots span:nth-child(1){ background: var(--danger); }
+  .chrome .dots span:nth-child(2){ background: #e8c34d; }
+  .chrome .dots span:nth-child(3){ background: var(--accent-2); }
+
+  .chrome .label{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+  }
+
+  /* ---------- Calculator ---------- */
+
+  .calc-body{ padding: 20px; }
+
+  .display{
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px 18px 16px;
+    text-align: right;
+    margin-bottom: 16px;
+    min-height: 84px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 4px;
+  }
+
+  .display .expr{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    min-height: 1.1em;
+    word-break: break-all;
+  }
+
+  .display .value{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2rem;
+    font-weight: 500;
+    word-break: break-all;
+  }
+
+  .keys{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  .key{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.05rem;
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px 0;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+
+  .key:hover{
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .key:active{ transform: translateY(1px); }
+
+  .key.op{ color: var(--accent-2); }
+  .key.op:hover{ border-color: var(--accent-2); color: var(--accent-2); }
+
+  .key.equal{
+    background: var(--accent);
+    color: #101830;
+    border-color: var(--accent);
+    font-weight: 700;
+  }
+
+  .key.equal:hover{ color: #101830; }
+
+  .key.wide{ grid-column: span 2; }
+
+  .key.clear{ color: var(--danger); }
+  .key.clear:hover{ border-color: var(--danger); color: var(--danger); }
+
+  /* ---------- History ---------- */
+
+  .hist-body{
+    padding: 16px 18px 18px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .hist-list{
+    list-style: none;
+    margin: 0 0 14px;
+    padding: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    max-height: 320px;
+    overflow-y: auto;
+    flex-grow: 1;
+  }
+
+  .hist-list li{
+    padding: 9px 0;
+    border-bottom: 1px solid var(--line);
+    color: var(--text-dim);
+  }
+
+  .hist-list li span{ color: var(--text); }
+
+  .hist-empty{
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    padding: 12px 0;
+  }
+
+  .btn-clear-hist{
+    align-self: flex-start;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--danger);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 9px 16px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+  }
+
+  .btn-clear-hist:hover{ border-color: var(--danger); }
+
+  @media (max-width: 640px){
+    .layout{ grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+  <h1 class="page-title">Calculadora</h1>
+
+  <div class="layout">
+
+    <div class="card">
+      <div class="chrome">
+        <div class="dots"><span></span><span></span><span></span></div>
+        <div class="label">calculadora</div>
+      </div>
+      <div class="calc-body">
+
+        <div class="display">
+          <div class="expr" id="expr">&nbsp;</div>
+          <div class="value" id="value">0</div>
+        </div>
+
+        <div class="keys">
+          <button class="key clear wide" data-action="clear">C</button>
+          <button class="key" data-action="backspace">⌫</button>
+          <button class="key op" data-op="/">÷</button>
+
+          <button class="key" data-digit="7">7</button>
+          <button class="key" data-digit="8">8</button>
+          <button class="key" data-digit="9">9</button>
+          <button class="key op" data-op="*">×</button>
+
+          <button class="key" data-digit="4">4</button>
+          <button class="key" data-digit="5">5</button>
+          <button class="key" data-digit="6">6</button>
+          <button class="key op" data-op="-">−</button>
+
+          <button class="key" data-digit="1">1</button>
+          <button class="key" data-digit="2">2</button>
+          <button class="key" data-digit="3">3</button>
+          <button class="key op" data-op="+">+</button>
+
+          <button class="key" data-digit="0">0</button>
+          <button class="key" data-action="decimal">.</button>
+          <button class="key equal wide" data-action="equals">=</button>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="chrome">
+        <div class="dots"><span></span><span></span><span></span></div>
+        <div class="label">historial</div>
+      </div>
+      <div class="hist-body">
+        <ul class="hist-list" id="histList"></ul>
+        <button class="btn-clear-hist" id="clearHistBtn">Borrar historial</button>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+  // Calculadora en JavaScript ES5
+
+  var exprEl = document.getElementById('expr');
+  var valueEl = document.getElementById('value');
+  var histListEl = document.getElementById('histList');
+  var clearHistBtn = document.getElementById('clearHistBtn');
+
+  var STORAGE_KEY = 'calc_historial';
+
+  var state = {
+    firstOperand: null,
+    operator: null,
+    secondOperand: null,
+    waitingForSecond: false,
+    displayValue: '0'
+  };
+
+  function updateDisplay() {
+    valueEl.textContent = state.displayValue;
+
+    if (state.operator && state.firstOperand !== null) {
+      exprEl.textContent = formatNumber(state.firstOperand) + ' ' + symbolFor(state.operator);
+    } else {
+      exprEl.textContent = '\u00A0';
+    }
+  }
+
+  function symbolFor(op) {
+    if (op === '/') return '÷';
+    if (op === '*') return '×';
+    if (op === '-') return '−';
+    return '+';
+  }
+
+  function formatNumber(num) {
+    var str = String(num);
+    if (str.length > 12) {
+      return num.toPrecision(8);
+    }
+    return str;
+  }
+
+  function inputDigit(digit) {
+    if (state.waitingForSecond) {
+      state.displayValue = digit;
+      state.waitingForSecond = false;
+    } else {
+      state.displayValue = (state.displayValue === '0') ? digit : state.displayValue + digit;
+    }
+    updateDisplay();
+  }
+
+  function inputDecimal() {
+    if (state.waitingForSecond) {
+      state.displayValue = '0.';
+      state.waitingForSecond = false;
+      updateDisplay();
+      return;
+    }
+    if (state.displayValue.indexOf('.') === -1) {
+      state.displayValue = state.displayValue + '.';
+      updateDisplay();
+    }
+  }
+
+  function backspace() {
+    if (state.waitingForSecond) {
+      return;
+    }
+    if (state.displayValue.length > 1) {
+      state.displayValue = state.displayValue.slice(0, -1);
+    } else {
+      state.displayValue = '0';
+    }
+    updateDisplay();
+  }
+
+  function clearAll() {
+    state.firstOperand = null;
+    state.operator = null;
+    state.secondOperand = null;
+    state.waitingForSecond = false;
+    state.displayValue = '0';
+    updateDisplay();
+  }
+
+  function operate(a, op, b) {
+    if (op === '+') return a + b;
+    if (op === '-') return a - b;
+    if (op === '*') return a * b;
+    if (op === '/') {
+      if (b === 0) return null;
+      return a / b;
+    }
+    return b;
+  }
+
+  function handleOperator(nextOperator) {
+    var inputValue = parseFloat(state.displayValue);
+
+    if (state.operator && state.waitingForSecond) {
+      state.operator = nextOperator;
+      updateDisplay();
+      return;
+    }
+
+    if (state.firstOperand === null) {
+      state.firstOperand = inputValue;
+    } else if (state.operator) {
+      var result = operate(state.firstOperand, state.operator, inputValue);
+
+      if (result === null) {
+        state.displayValue = 'Error';
+        state.firstOperand = null;
+        state.operator = null;
+        state.waitingForSecond = false;
+        updateDisplay();
+        return;
+      }
+
+      addToHistory(state.firstOperand, state.operator, inputValue, result);
+      state.firstOperand = result;
+      state.displayValue = formatNumber(result);
+    }
+
+    state.waitingForSecond = true;
+    state.operator = nextOperator;
+    updateDisplay();
+  }
+
+  function handleEquals() {
+    var inputValue = parseFloat(state.displayValue);
+
+    if (state.operator === null || state.waitingForSecond) {
+      return;
+    }
+
+    var result = operate(state.firstOperand, state.operator, inputValue);
+
+    if (result === null) {
+      state.displayValue = 'Error';
+      state.firstOperand = null;
+      state.operator = null;
+      state.waitingForSecond = false;
+      updateDisplay();
+      return;
+    }
+
+    addToHistory(state.firstOperand, state.operator, inputValue, result);
+
+    state.displayValue = formatNumber(result);
+    state.firstOperand = result;
+    state.operator = null;
+    state.waitingForSecond = true;
+    updateDisplay();
+  }
+
+  // ---------- Historial con localStorage ----------
+
+  function loadHistory() {
+    var raw = null;
+    try {
+      raw = localStorage.getItem(STORAGE_KEY);
+    } catch (e) {
+      raw = null;
+    }
+    if (!raw) return [];
+    try {
+      return JSON.parse(raw);
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveHistory(list) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    } catch (e) {
+      // localStorage no disponible; el historial solo dura la sesion.
+    }
+  }
+
+  function addToHistory(a, op, b, result) {
+    var list = loadHistory();
+    var entry = {
+      text: formatNumber(a) + ' ' + symbolFor(op) + ' ' + formatNumber(b) + ' = ' + formatNumber(result)
+    };
+    list.push(entry);
+    saveHistory(list);
+    renderHistory();
+  }
+
+  function renderHistory() {
+    var list = loadHistory();
+    histListEl.innerHTML = '';
+
+    if (list.length === 0) {
+      var empty = document.createElement('div');
+      empty.className = 'hist-empty';
+      empty.textContent = 'Sin calculos todavia.';
+      histListEl.appendChild(empty);
+      return;
+    }
+
+    for (var i = list.length - 1; i >= 0; i--) {
+      var li = document.createElement('li');
+      li.textContent = list[i].text;
+      histListEl.appendChild(li);
+    }
+  }
+
+  function clearHistory() {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (e) {}
+    renderHistory();
+  }
+
+  // ---------- Eventos ----------
+
+  var keys = document.querySelectorAll('.key');
+  for (var i = 0; i < keys.length; i++) {
+    keys[i].addEventListener('click', function (event) {
+      var btn = event.currentTarget;
+      var digit = btn.getAttribute('data-digit');
+      var op = btn.getAttribute('data-op');
+      var action = btn.getAttribute('data-action');
+
+      if (digit !== null) {
+        inputDigit(digit);
+      } else if (op !== null) {
+        handleOperator(op);
+      } else if (action === 'decimal') {
+        inputDecimal();
+      } else if (action === 'clear') {
+        clearAll();
+      } else if (action === 'backspace') {
+        backspace();
+      } else if (action === 'equals') {
+        handleEquals();
+      }
+    });
+  }
+
+  clearHistBtn.addEventListener('click', clearHistory);
+
+  // Soporte de teclado
+  document.addEventListener('keydown', function (event) {
+    var key = event.key;
+
+    if (key >= '0' && key <= '9') {
+      inputDigit(key);
+    } else if (key === '.') {
+      inputDecimal();
+    } else if (key === '+' || key === '-' || key === '*' || key === '/') {
+      handleOperator(key);
+    } else if (key === 'Enter' || key === '=') {
+      event.preventDefault();
+      handleEquals();
+    } else if (key === 'Backspace') {
+      backspace();
+    } else if (key === 'Escape') {
+      clearAll();
+    }
+  });
+
+  // Inicio
+  updateDisplay();
+  renderHistory();
+</script>
+
+</body>
+</html>
